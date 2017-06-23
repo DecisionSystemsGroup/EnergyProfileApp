@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+
+<!--
+    Copyright (c) 2012-2016 Adobe Systems Incorporated. All rights reserved.
+
+    Licensed to the Apache Software Foundation (ASF) under one
+    or more contributor license agreements.  See the NOTICE file
+    distributed with this work for additional information
+    regarding copyright ownership.  The ASF licenses this file
+    to you under the Apache License, Version 2.0 (the
+    "License"); you may not use this file except in compliance
+    with the License.  You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing,
+    software distributed under the License is distributed on an
+    "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+     KIND, either express or implied.  See the License for the
+    specific language governing permissions and limitations
+    under the License.
+-->
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="format-detection" content="telephone=no" />
+    <meta name="msapplication-tap-highlight" content="no" />
+    <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width" />
+    <!-- This is a wide open CSP declaration. To lock this down for production, see below. -->
+    <meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline'; style-src 'self' 'unsafe-inline'; media-src *" />
+    <link rel="stylesheet" href="css/font-awesome.min.css">
+    <!-- Good default declaration:
+    * gap: is required only on iOS (when using UIWebView) and is needed for JS->native communication
+    * https://ssl.gstatic.com is required only on Android and is needed for TalkBack to function properly
+    * Disables use of eval() and inline scripts in order to mitigate risk of XSS vulnerabilities. To change this:
+        * Enable inline JS: add 'unsafe-inline' to default-src
+        * Enable eval(): add 'unsafe-eval' to default-src
+    * Create your own at http://cspisawesome.com
+    -->
+    <!-- <meta http-equiv="Content-Security-Policy" content="default-src 'self' data: gap: 'unsafe-inline' https://ssl.gstatic.com; style-src 'self' 'unsafe-inline'; media-src *" /> -->
+
+    <link rel="stylesheet" type="text/css" href="css/main.css" />
+    <title>EnergyProfile</title>
+    <script src= "js/jquery-2.2.3.min.js"></script>
+	<script type="js/main.js"></script>
+    
+</head>
+
+<body>
+    <div class="app">
+
+	    <header>
+	    	<a href="http://dsg.teiste.gr/">
+	    	<img id="image1" src="img/dsg.png" alt="Dsg_teiste" style="width:50px; height: 50px;"></a>
+	    	<h3>Energy Profile</h3>	  
+	    	<a href="http://inf.teiste.gr/">
+	    	<img id="image2" src="img/teiste.jpg" alt="teiste" style="width:60px; height:40px;"></a>
+		</header>
+		<div class="container">
+				
+		<form>
+			From: <input type="date" id="fromdate">
+			</br>
+			To:  &emsp; <input type="date" id="todate">
+			<br></br>
+			<a  id="submit">Submit</a>
+		</form><br>
+		<button  id="btnPrev">Previous</button>
+		<button  id="btnNext">Next</button>
+		<br></br>
+		<div id="date"></div>
+        <div id="g1" class="gauge">Tech.01</div>
+        <div id="g2" class="gauge">Tech.02</div>
+        <div id="g3" class="gauge">Health</div>
+        <div id="g4" class="gauge">Lib-Noc</div>
+        <div id="g5" class="gauge">Admin</div>
+    	</div>
+    		<script src="js/raphael-2.1.4.min.js"></script>
+    		<script src="js/justgage.js"></script>
+    		<script type="text/javascript" src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+    		<script type="text/javascript">
+    			var fdate;
+				var tdate;
+				var initialized = false;
+    			var readings, current, current_date, g1, g2, g3, g4, g5;
+    			function getReadings(fdate, tdate){
+					$.ajax({
+						url: 'http://195.251.56.139:8080/api/getReadings',
+						type: 'GET',
+						data: {from: fdate, to: tdate},
+						dataType: 'json',
+						success: function(data) {
+							if (initialized == false) {
+    							initialized = true;
+								current = 0;
+								readings = data.results;
+								current_date = data.results.type1[current].updated;
+								$('#date').html(current_date);
+			        		 	g1 = new JustGage({
+									id: "g1",
+									value: data.results.type1[current].value,
+									min: 0,
+									max: 10000,
+									title: "kWh"
+								});
+
+								g2 = new JustGage({
+									id: "g2",
+									value: data.results.type2[current].value,
+									min: 0,
+									max: 10000,
+									title: "kWh"
+								});
+
+								g3 = new JustGage({
+									id: "g3",
+									value: data.results.type3[current].value,
+									min: 0,
+									max: 10000,
+									title: "kWh"
+								});
+
+								g4 = new JustGage({
+									id: "g4",
+									value: data.results.type4[current].value,
+									min: 0,
+									max: 10000,
+									title: "kWh"
+								});
+
+								g5 = new JustGage({
+									id: "g5",
+									value: data.results.type5[current].value,
+									min: 0,
+									max: 10000,
+									title: "kWh"
+								});
+							} else {
+								readings = data.results;
+								current_date = data.results.type1[current].updated;
+								$('#date').html( current_date);
+		    					g1.refresh(readings.type1[0].value);
+								g2.refresh(readings.type2[0].value);
+								g3.refresh(readings.type3[0].value);
+								g4.refresh(readings.type4[0].value);
+								g5.refresh(readings.type5[0].value);
+
+		    				}
+						}
+					});
+    				
+    				
+    			}
+    			$( document ).ready(function() {
+    				var d = new Date();
+
+					var month = d.getMonth()+1;
+					var today = d.getDate();
+					var yesterday = d.getDate()-1;
+
+					var fdate = d.getFullYear() + '-' +
+						((''+month).length<2 ? '0' : '') + month + '-' +
+						((''+yesterday).length<2 ? '0' : '') + yesterday;
+
+					var tdate = d.getFullYear() + '-' +
+						((''+month).length<2 ? '0' : '') + month + '-' +
+						((''+today).length<2 ? '0' : '') + today;
+
+					$("#fromdate").val(fdate);
+					$("#todate").val(tdate);
+					getReadings(fdate, tdate);
+    			});
+
+				
+				$("#submit").on("click", function(){
+					fdate = $("#fromdate").val();	
+					tdate = $("#todate").val();
+					// alert(fdate);
+					getReadings(fdate, tdate);
+				});
+
+				$("#btnPrev").on("click", function(){
+					if(current != 1000000){
+						current++;
+					}
+					current_date = readings.type1[current].updated;
+					$('#date').html( current_date);
+					g1.refresh(readings.type1[current].value);
+					g2.refresh(readings.type2[current].value);
+					g3.refresh(readings.type3[current].value);
+					g4.refresh(readings.type4[current].value);
+					g5.refresh(readings.type5[current].value);
+
+				});
+				$("#btnNext").on("click", function(){
+					if(current != 0){
+						current--;
+					}
+					current_date = readings.type1[current].updated;
+					$('#date').html( current_date);
+					g1.refresh(readings.type1[current].value);
+					g2.refresh(readings.type2[current].value);
+					g3.refresh(readings.type3[current].value);
+					g4.refresh(readings.type4[current].value);
+					g5.refresh(readings.type5[current].value);
+				});
+    		</script>
+    </div>
+    <script type="text/javascript" src="cordova.js"></script>
+    <script type="text/javascript" src="js/index.js"></script>
+    <script type="text/javascript">
+        app.initialize();
+    </script>
+    <footer><h5>&copy;  Computational Intelligence, Information and Image Analysis Lab.</h5></footer>
+</body>
+
+</html>
